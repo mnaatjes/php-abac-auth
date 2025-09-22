@@ -1,0 +1,12 @@
+services:
+  abac-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Mount the project directory into the container
+    volumes:
+      - .:/app
+    # Set the working directory
+    working_dir: /app
+    # Keep the container running in the background so Dev Containers can attach to it.
+    command: tail -f /dev/null

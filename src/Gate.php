@@ -4,14 +4,19 @@
 
     use mnaatjes\ABAC\Contracts\PolicyDecisionPoint;
     use mnaatjes\ABAC\Contracts\PolicyContext;
-    use mnaatjes\ABAC\AuthorizationException;
 
+    /**
+     * Gate
+     */
     final class Gate {
         public function __construct(private PolicyDecisionPoint $pdp){}
         public function authorize(string $action, PolicyContext $context){
-            // Run PDP decide method
-            if($this->pdp->decide($action, $context) === false){
-                throw new AuthorizationException("Action `{$action}` is NOT Allowed!");
+            // Capture response from decision
+            $AuthResponse = $this->pdp->decide($action, $context);
+
+            // Evaluate Auth Response Object
+            if($AuthResponse->allowed === false){
+                throw new \Exception($AuthResponse->message ?? "Action `{$action}` is NOT Allowed!");
             }
         }
 

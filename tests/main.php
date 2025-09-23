@@ -14,40 +14,45 @@
     // require autoloader
     require_once __DIR__ . '/../vendor/autoload.php';
 
-use mnaatjes\ABAC\Contracts\PolicyContext;
-use mnaatjes\ABAC\Tests\DataObjects\Category;
+    use mnaatjes\ABAC\Contracts\PolicyContext;
+    use mnaatjes\ABAC\Contracts\PolicyInformationPoint;
+    use mnaatjes\ABAC\Tests\DataObjects\Category;
     use mnaatjes\ABAC\Tests\Policies\Judge;
     use mnaatjes\ABAC\Gate;
 
-    // Collect data
+    // Create Entity making the Request: Actor
+    final readonly class actor implements PolicyInformationPoint {
+        public function __construct(
+            public readonly string $name,
+            public readonly ?int $id=NULL,
+            public readonly ?string $description=NULL
+        ){}
+    }
 
-    // Load
-    $fp = "Data/config.php";
-    $loadFile = function() use($fp){return require $fp;};
+    // Declare Auth Gate
+    $gate = new Gate(new Judge());
 
-    // Make Subjects
-    $mkSubjects = function($loadFile){
-        $data = [];
-        foreach($loadFile() as $name => $desc){
-            $data[] = new Category($name, $desc);
-        }
-        return $data;
-    };
+    // Try and Catch
+    try {
+        // Perform Authorization
+        $gate->authorize(
+            // Action
+            "Action",
+            new PolicyContext(
+                // Actor
+                new Actor("API"),
+                // Subjects
+                [new Category("ham", "Description...")],
+                // Environment
+                ["location" => "home"]
+        ));
+        
+        // Debugging Message
+        var_dump("Success!");
 
-    // Perform schema validation
-    
-    // Declare Gate with PDP
-    $gate = new Gate(
-        new Judge()
-    );
+    } catch(\Exception $e){
+        // Throw Exception
+        var_dump("Failure! " . $e);
+    }
 
-    // Perform authorization
-    $gate->authorize("continue", new PolicyContext(
-        new Category("apple", "failure condition"),
-        $mkSubjects($loadFile),
-        ["home"]
-    ));
-
-    // Authorization was successful
-    var_dump("Success!");
 ?>

@@ -691,4 +691,104 @@ A developer using your library would:
 3.  **Instantiate your library's `Gate` (PEP)**, injecting their custom PDP into it (`$gate = new Gate($myAppPolicy);`).
 4.  **Use the `$gate`** in their application to authorize actions.
 
+## 11. The Core Components of an ABAC Decision
+
+While the basic pattern for an authorization check is an **Actor** performing an **Action** on a **Subject**, the real power of ABAC comes from the 'A' and 'B' in its name: **Attribute-Based**.
+
+ABAC makes decisions by evaluating the **attributes** of four distinct components against a policy.
+
+1.  **Actor Attributes:** Who is the user?
+    *   *Examples:* `role`, `department`, `age`, `security_clearance`.
+
+2.  **Action:** What are they trying to do?
+    *   *Examples:* `edit`, `view`, `delete`, `approve`.
+
+3.  **Subject (or Resource) Attributes:** What is being acted upon?
+    *   *Examples:* `status`, `owner_id`, `value`, `sensitivity_level`.
+
+4.  **Environmental Attributes:** What is the context of the request?
+    *   *Examples:* `time_of_day`, `IP_address`, `location`, `is_mfa_enabled`.
+
+### Real-World Analogy
+
+Imagine a policy like this:
+
+> Allow a **user** (Actor) to **approve** (Action) a **payment** (Subject), but only if:
+>
+> *   The user's `role` is 'manager' (**Actor Attribute**)
+> *   The payment's `amount` is less than $1,000 (**Subject Attribute**)
+> *   The `time_of_day` is during business hours (**Environmental Attribute**)
+
+A simpler Role-Based Access Control (RBAC) system would stop at "is the user a manager?". ABAC goes much deeper, allowing for incredibly rich, context-aware rules by evaluating attributes from all four components.
+
+In summary, while ABAC is perfectly suited for "Actor, Action, Subject" scenarios, its true strength lies in making highly granular, context-aware decisions based on the *attributes* of all those components, plus the environment.
+
+
+## 12. Practical Example: Modeling Metadata Validation
+
+Here is how you would typically model the authorization of a metadata property (like a `category` or `type`) using the ABAC components.
+
+### Scenario
+
+A developer is registering a new service and tries to assign it the category `"database"`.
+
+### Summary
+
+*   **Actor:** The `User` or system process that is attempting to assign the metadata.
+*   **Action:** A string that represents the intent, such as `'use-category'`.
+*   **Subject:** The metadata property itself, modeled as its own object (e.g., `new Category('database')`).
+
+---
+
+### Detailed Breakdown
+
+#### 1. The Actor
+
+The **Actor** is the entity initiating the request. It's the "who".
+
+*   **Identification:** It is the currently authenticated `User` (the developer) or a `System` object representing an automated process.
+*   **Why it's the Actor:** The policy might need to ask questions about the actor's attributes. For example: "Is this user in the 'DevOps' role? Only DevOps can assign the 'production' category." Without the user as the actor, this rule would be impossible to write.
+
+#### 2. The Action
+
+The **Action** is a string that represents the specific operation you are checking permission for. It's the "what".
+
+*   **Identification:** It would be a descriptive string like `'use-category'`.
+*   **Why:** This string allows your `PolicyDecisionPoint` (e.g., your `Judge` or a future `MetadataPolicy` class) to know which set of rules to apply. A single policy class might handle multiple actions (`'use-category'`, `'delete-category'`, `'create-category'`), and the action string acts as the router.
+
+#### 3. The Subject
+
+The **Subject** is the resource being acted upon or validated. The subject is not the service being registered, nor is it just the raw string `"database"`.
+
+*   **Identification:** The best practice is to model the metadata property as its own distinct object. You would create a `Category` object to represent the data being checked, for example: `new Category('database')`.
+*   **Why:**
+    1.  **Clarity & Type-Safety:** It makes the "evidence" being sent to the policy engine explicit and type-safe. The policy knows it's receiving a `Category` object, not just a generic string.
+    2.  **Extensibility:** What if, in the future, categories themselves have attributes? For instance, a category might have a `sensitivity_level`. The policy might be: "Only allow users with 'high' clearance to use categories with a 'high' sensitivity level." This is only possible if the `Category` object, with all its attributes, is the **Subject** being evaluated.
+
+### Example Code
+
+Here is how you would assemble the `PolicyContext` for this scenario:
+
+```php
+// Scenario: A user is attempting to use the category 'database'.
+
+// 1. The ACTOR
+$currentUser = new User(id: 123, roles: ['developer']);
+
+// 2. The SUBJECT (modeled as an object)
+$categoryToUse = new Category(name: 'database');
+
+// 3. The ACTION
+$action = 'use-category';
+
+// Assemble the evidence for the authorization check
+$context = new PolicyContext(
+    actor: $currentUser,
+    subjects: [$categoryToUse]
+);
+
+// The Gate can now ask the PDP if this actor can perform this
+// action on this subject, based on their collective attributes.
+$gate->authorize($action, $context);
+```
 ```

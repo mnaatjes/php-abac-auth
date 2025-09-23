@@ -26,7 +26,8 @@
             // Validate each subject is a PolicyInformationPoint
             foreach ($this->subjects as $subject) {
                 if (!$subject instanceof PolicyInformationPoint) {
-                    throw new \InvalidArgumentException('All subjects must implement PolicyInformationPoint.');
+                    // One of the Subjects is NOT a Policy Information point
+                    throw new \TypeError('All subjects must implement PolicyInformationPoint.');
                 }
             }
         }
@@ -36,6 +37,7 @@
         public function getSubjects(): array{return $this->subjects;}
         public function getSubjectKeys(): array{return array_keys($this->subjects);}
         public function getSubjectValues(): array{return array_values($this->subjects);}
+        public function getSubjectsByProp(string $prop){return array_map(function($obj) use($prop){return $obj->$prop;}, $this->subjects);}
     }
 
 ?>

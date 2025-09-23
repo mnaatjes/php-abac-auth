@@ -1072,4 +1072,43 @@ There is a strong relationship between the names used in the controller, the `au
 *   `Controller->action()` -> `authorize('action')`: **Strong Convention.**
     The name of the controller method matching the authorization action is a widely-followed convention, not a technical rule. It makes the code highly readable and follows RESTful principles. While you *could* call `authorize('update', ...)` from a controller method named `saveChanges()`, it would be confusing and unconventional.
 
+---
+
+## Appendix B: The Required Parts of an ABAC Implementation
+
+At the highest level, the ABAC pattern consists of three architectural roles: The Enforcer (PEP), The Decider (PDP), and The Evidence (PIP). For a practical implementation, these can be distilled into five required parts.
+
+### A) Architectural Components (The "Infrastructure")
+
+You must build these two components.
+
+1.  **A Policy Enforcement Point (PEP)**
+    *   **Your Term:** `Gate`
+    *   **Core Job:** To be the "bouncer." Its role is to stop the application flow, trigger an authorization check, and throw an exception if the check fails.
+    *   **Example:** Your `Gate` class or Laravel's `authorize()` method.
+
+2.  **A Policy Decision Point (PDP)**
+    *   **Core Job:** To be the "brain." It contains the actual business logic of your rules and returns a simple "allow" or "deny" verdict.
+    *   **Example:** Your `DocumentPolicy` class.
+
+### B) Information Components (The "Data")
+
+You must provide these three pieces of information to the infrastructure on every check.
+
+3.  **An Action**
+    *   **Core Job:** A string that states the user's intent. It answers the question, "What is being attempted?"
+    *   **Example:** `'update'`, `'view-dashboard'`.
+
+4.  **An Actor**
+    *   **Core Job:** An object representing the entity performing the action. It answers the question, "Who is attempting it?" This is a required **Policy Information Point (PIP)**.
+    *   **Example:** A `User`, `Service`, or `Guest` object.
+
+5.  **A Subject** (Optional, but usually required)
+    *   **Core Job:** An object representing the resource being acted upon. It answers the question, "What is it being done to?" This is also a **Policy Information Point (PIP)**.
+    *   **Example:** A `Post`, `Document`, or `Category` object.
+
+### Summary
+
+To implement the pattern, you build the **PEP** and **PDP** once as reusable infrastructure. Then, for every authorization check, you use the **PEP** to pass the **Action**, **Actor**, and **Subject** to the **PDP** for a decision.
+
 ```

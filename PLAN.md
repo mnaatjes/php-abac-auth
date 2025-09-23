@@ -18,7 +18,50 @@ These terms, formalized by the XACML standard, describe distinct roles within an
     *   *Analogy:* The bouncer who checks the ID against the guest list and either opens the rope or denies entry.
     *   *In Code:* An `AuthMiddleware`, the `Gate::allows()` method, or a `can()` check in a controller.
 
-## 2. Standard vs. Pattern: XACML in PHP
+## 2. Prerequisite: Input Validation vs. Authorization
+
+Before the PEP/PDP/PIP pattern even begins, there is a critical prerequisite step: **Input Validation**. It's crucial to understand that Input Validation and Authorization are two separate processes that happen in sequence.
+
+*   **Input Validation** asks: "Is this data's **shape and format correct**?" (e.g., "Is this `email` field a valid email address? Is the `age` an integer?").
+*   **Authorization** asks: "Is this user **allowed to perform this action** with this data?"
+
+The purpose of input validation is to convert raw, untrusted data (e.g., from an HTTP request) into the clean, typed, and trusted PIP data objects that the authorization system will use as Evidence.
+
+### The Two-Stage Checkpoint
+
+Think of it as a two-stage security checkpoint at an airport:
+1.  **Input Validation:** The check-in agent verifies your passport is filled out correctly and isn't forged. They are validating the data's structure.
+2.  **Authorization:** The border agent checks if your valid passport gives you permission to enter the country. They are authorizing an action.
+
+### Workflow Diagram
+
+This sequence diagram shows validation happening first. The authorization flow only begins if validation succeeds.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller
+    participant Validator
+    participant Gate as Gate (PEP)
+    participant Judge as Judge (PDP)
+
+    Client->>Controller: HTTP Request with Raw Data
+    Controller->>Validator: Validate Raw Data
+    alt Validation Fails
+        Validator-->>Controller: Error (e.g., 422 Unprocessable Entity)
+        Controller-->>Client: HTTP Error Response
+    else Validation Succeeds
+        Validator-->>Controller: Validated Data
+        Controller->>Controller: Create trusted PIP Data Objects
+        Controller->>Gate: authorize(action, PIPs)
+        Gate->>Judge: decide(action, PIPs)
+        Judge-->>Gate: Verdict (true/false)
+        Gate-->>Controller: Enforce (allow or throw exception)
+        Controller-->>Client: HTTP Success Response
+    end
+```
+
+## 3. Standard vs. Pattern: XACML in PHP
 
 PHP frameworks do **not** implement the formal, heavyweight XACML standard directly. The XML-based nature of the standard is often seen as too cumbersome for most web development.
 
@@ -29,7 +72,7 @@ For example, Laravel's `Gate` maps perfectly:
 - **PIP:** The `User` and `Post` models passed to the gate.
 - **PEP:** The `Gate::allows()` method or the `can:` middleware.
 
-## 3. How They Interact: The "Hub and Spoke" Model
+## 4. How They Interact: The "Hub and Spoke" Model
 
 The components are **not** implemented in a simple chain. Doing so would create a tightly-coupled system. Instead, they interact in a **hub-and-spoke** model where the **PEP is the central hub**.
 
@@ -66,7 +109,7 @@ sequenceDiagram
     AppCode->>AppCode: Proceed with post deletion.
 ```
 
-## 4. Why This Structure is a Best Practice
+## 5. Why This Structure is a Best Practice
 
 Separating these roles is fundamental to good software design:
 
@@ -74,7 +117,7 @@ Separating these roles is fundamental to good software design:
 *   **Flexibility:** You can change the policy rules (PDP) without ever touching the enforcement logic (PEP).
 *   **Testability:** Each component can be unit-tested in isolation.
 
-## 5. OOP Implementation: Dependency Injection
+## 6. OOP Implementation: Dependency Injection
 
 The ideal OOP relationship for these components is **Dependency Injection**. The class containing the PEP (e.g., `ServiceRegistry`) should not create its dependencies. Instead, the PDP facade (e.g., `CategoryManager`) is passed into, or "injected" into, the PEP's class, usually via the constructor.
 
@@ -126,7 +169,7 @@ classDiagram
 2.  **`CategoryManager` loads `categories.php`:** The dotted line (`..>`) shows that the `CategoryManager` depends on and loads its rules from the `categories.php` file (the PDP).
 3.  **`ServiceRegistry` receives `Metadata`:** The `ServiceRegistry`'s `register` method receives the metadata array (the PIP) as an argument, which it will then ask the `CategoryManager` to validate.
 
-## 6. Abstract PHP Implementation Contracts
+## 7. Abstract PHP Implementation Contracts
 
 While specific implementations vary, we can define a set of interfaces to represent the abstract roles of PDP, PIP, and PEP. This helps in creating a clean, type-safe, and decoupled authorization system.
 
@@ -173,47 +216,205 @@ classDiagram
     PolicyInformationPoint <|.. Post
 ```
 
+### d) The Policy Context (A Composite PIP)
+
+For scenarios where an authorization decision involves multiple PIPs (e.g., a user, a post, and a comment) or additional environmental context, passing individual parameters can become cumbersome. The `PolicyContext` class solves this.
+
+It is a **composite PIP** (a Data Transfer Object) that bundles all "Evidence" for a decision into a single, structured object. This simplifies method signatures and improves type-safety, making the authorization logic cleaner and easier to maintain.
+
+A `PolicyContext` typically encapsulates three categories of attributes:
+*   **`actor`**: The primary user or system performing the action.
+*   **`subjects`**: An array of resources being acted upon (e.g., a `Post`, a `Comment`).
+*   **`environment`**: A flexible array for any other contextual attributes that aren't part of the actor or subjects.
+
+#### The `$environment` Array
+
+The `$environment` array's purpose is to hold information about the **circumstances** of the request. It answers questions like:
+*   **Where** is the request from? (e.g., `'ip_address' => '192.168.1.1'`)
+*   **When** is it happening? (e.g., `'current_time' => new \DateTimeImmutable()`)
+*   **How** is the user authenticated? (e.g., `'mfa_enabled' => true`)
+
+This allows for powerful, granular policies, such as "only allow edits from a specific IP range" or "only allow approvals during business hours."
+
+#### Should the class be `final`?
+
+Yes, it is a best practice to make the `PolicyContext` class `final`. It is a DTO whose sole purpose is to carry data. Making it `final` ensures its structure is stable and cannot be altered through inheritance, which guarantees a predictable and reliable data contract for the policy engine.
+
+**PHP Class:**
+```php
+<?php
+namespace YourVendor\AbacAuth\Contracts;
+
+// PolicyInformationPoint is the marker interface for all evidence
+// (This interface is already defined above, included here for context)
+// interface PolicyInformationPoint {}
+
+final class PolicyContext implements PolicyInformationPoint
+{
+    /**
+     * @param PolicyInformationPoint $actor The primary actor performing the action.
+     * @param array<PolicyInformationPoint> $subjects An array of subjects being acted upon.
+     * @param array<string, mixed> $environment Any other relevant environmental context (e.g., IP address, time).
+     */
+    public function __construct(
+        public readonly PolicyInformationPoint $actor,
+        public readonly array $subjects = [],
+        public readonly array $environment = []
+    ) {
+        // Optional: Add validation here to ensure all $subjects are PolicyInformationPoint
+        foreach ($this->subjects as $subject) {
+            if (!$subject instanceof PolicyInformationPoint) {
+                throw new \InvalidArgumentException('All subjects must implement PolicyInformationPoint.');
+            }
+        }
+    }
+
+    /**
+     * Helper method to retrieve a specific subject by its class type.
+     *
+     * @template T of PolicyInformationPoint
+     * @param class-string<T> $type The class name of the subject to retrieve.
+     * @return T|null
+     */
+    public function getSubjectByType(string $type): ?PolicyInformationPoint
+    {
+        foreach ($this->subjects as $subject) {
+            if ($subject instanceof $type) {
+                return $subject;
+            }
+        }
+        return null;
+    }
+}
+```
+
+**Example Usage (Creating the Context):**
+```php
+// In your Controller or Service
+use YourVendor\AbacAuth\Contracts\PolicyContext;
+use App\Models\User; // Assuming these are your application's PIPs
+use App\Models\Post;
+use App\Models\Comment;
+
+$currentUser = new User(id: 123, roles: ['editor']); // PIP
+$postToEdit = new Post(id: 456, authorId: 123);     // PIP
+$commentToModerate = new Comment(id: 789, postId: 456); // PIP
+
+// Assemble all the evidence into a single PolicyContext object
+$context = new PolicyContext(
+    actor: $currentUser,
+    subjects: [$postToEdit, $commentToModerate],
+    environment: ['ip_address' => '192.168.1.1', 'current_time' => new \DateTimeImmutable()]
+);
+```
+
+### e) The Authorization Response (A Richer Verdict)
+
+While returning a simple `boolean` from a policy is straightforward, it's often too limited. It doesn't explain *why* a request was denied. A much more robust pattern is to return a dedicated `AuthorizationResponse` object.
+
+This object acts as a rich "verdict," containing not just the decision but also the reasoning. It typically includes:
+1.  **The Decision:** A boolean (`true` for allow, `false` for deny).
+2.  **A Message:** A human-readable string explaining the outcome (e.g., "User must be an admin to delete posts."). This is invaluable for logging and debugging.
+3.  **A Code (Optional):** A machine-readable identifier (e.g., `NOT_ADMIN`) for programmatic checks.
+
+**PHP Class:**
+```php
+<?php
+namespace YourVendor\AbacAuth;
+
+final readonly class AuthorizationResponse
+{
+    private function __construct(
+        public bool $allowed,
+        public ?string $message = null,
+        public ?string $code = null
+    ) {}
+
+    public static function allow(): self
+    {
+        return new self(true);
+    }
+
+    public static function deny(?string $message = null, ?string $code = null): self
+    {
+        return new self(false, $message, $code);
+    }
+}
+```
+
 ### b) The Policy Decision Point (PDP)
 
-The PDP contains the actual policy logic. Its interface needs a method to make a decision based on the information (PIPs) provided.
+The PDP contains the actual policy logic. Its interface is updated to return the `AuthorizationResponse` object, providing a much richer verdict than a simple boolean.
 
 **PHP Interface:**
 ```php
+<?php
+namespace YourVendor\AbacAuth\Contracts;
+
+use YourVendor\AbacAuth\AuthorizationResponse;
+
 interface PolicyDecisionPoint
 {
     /**
      * Decides if an action is permitted based on the given context.
+     *
+     * @param string $action The action to authorize (e.g., 'edit-post', 'delete-user').
+     * @param PolicyContext $context A comprehensive object containing all relevant PIPs (actor, subjects) and environmental data.
+     * @return AuthorizationResponse The detailed result of the authorization check.
      */
-    public function decide(string $action, PolicyInformationPoint $actor, ?PolicyInformationPoint $subject = null): bool;
+    public function decide(string $action, PolicyContext $context): AuthorizationResponse;
 }
 ```
 
 **Example Implementation:**
 ```php
+use YourVendor\AbacAuth\Contracts\PolicyContext;
+use YourVendor\AbacAuth\AuthorizationResponse;
+
 class BlogPostPolicy implements PolicyDecisionPoint
 {
-    public function decide(string $action, PolicyInformationPoint $actor, ?PolicyInformationPoint $subject = null): bool
+    public function decide(string $action, PolicyContext $context): AuthorizationResponse
     {
-        // Ensure the actor is a User and subject is a Post for context
-        if (!$actor instanceof User || !$subject instanceof Post) {
-            return false;
+        $actor = $context->actor;
+        $post = $context->getSubjectByType(Post::class);
+
+        if (!$actor instanceof User || !$post instanceof Post) {
+            return AuthorizationResponse::deny('Invalid context provided.');
         }
 
         return match ($action) {
-            'edit-post' => $actor->id === $subject->authorId || in_array('admin', $actor->roles),
-            'delete-post' => in_array('admin', $actor->roles),
-            default => false,
+            'edit-post' => $this->canEdit($actor, $post),
+            'delete-post' => $this->canDelete($actor, $post),
+            default => AuthorizationResponse::deny("Unknown action: {$action}."),
         };
+    }
+
+    private function canEdit(User $actor, Post $post): AuthorizationResponse
+    {
+        if ($actor->id === $post->authorId || in_array('admin', $actor->roles)) {
+            return AuthorizationResponse::allow();
+        }
+        return AuthorizationResponse::deny('You are not the author of this post.');
+    }
+
+    private function canDelete(User $actor, Post $post): AuthorizationResponse
+    {
+        if (in_array('admin', $actor->roles)) {
+            return AuthorizationResponse::allow();
+        }
+        return AuthorizationResponse::deny('Only administrators can delete posts.');
     }
 }
 ```
 
 ### c) The Policy Enforcement Point (PEP)
 
-The PEP orchestrates the check. It's a service that uses a PDP to make a decision and then acts on it. It is implemented as a concrete class, not an interface, but it depends on the PDP *interface*.
+The PEP is updated to handle the `AuthorizationResponse` object. It now checks the `allowed` property and can use the response message in its exception, providing more meaningful error details.
 
 **Example Implementation:**
 ```php
+use YourVendor\AbacAuth\AuthorizationResponse; // Add this use statement
+
 class AuthorizationGate
 {
     public function __construct(private PolicyDecisionPoint $pdp) {}
@@ -221,11 +422,17 @@ class AuthorizationGate
     /**
      * Checks if an action is allowed. Throws an exception if not.
      * This is the Policy Enforcement Point.
+     *
+     * @param string $action The action to authorize.
+     * @param PolicyContext $context The comprehensive context for the decision.
+     * @throws AuthorizationException If the action is not allowed.
      */
-    public function authorize(string $action, PolicyInformationPoint $actor, ?PolicyInformationPoint $subject = null): void
+    public function authorize(string $action, PolicyContext $context): void
     {
-        if ($this->pdp->decide($action, $actor, $subject) === false) {
-            throw new AuthorizationException("Action '{$action}' is not allowed.");
+        $response = $this->pdp->decide($action, $context);
+
+        if ($response->allowed === false) {
+            throw new AuthorizationException($response->message ?? "Action '{$action}' is not allowed.");
         }
     }
 }
@@ -235,24 +442,24 @@ class AuthorizationGate
 ```mermaid
 classDiagram
     class AuthorizationGate {
-        <<PEP>>
+        PEP
         -PolicyDecisionPoint pdp
-        +authorize(action, actor, subject)
+        +authorizeaction, actor, subject
     }
     class PolicyDecisionPoint {
-        <<interface>>
-        +decide(action, actor, subject) bool
+        interface
+        +decideaction, actor, subject bool
     }
     class BlogPostPolicy {
-        <<PDP>>
-        +decide(action, actor, subject) bool
+        PDP
+        +decide action, actor, subject bool
     }
 
     AuthorizationGate o-- PolicyDecisionPoint : injects
     PolicyDecisionPoint <|.. BlogPostPolicy
 ```
 
-## 7. Generic Example: Blog Post Authorization
+## 8. Generic Example: Blog Post Authorization
 
 Here is how all the pieces work together in a generic controller.
 
@@ -273,8 +480,14 @@ class PostController
     public function update(User $currentUser, Post $postToEdit, array $newData)
     {
         try {
-            // The PEP is called here.
-            $this->gate->authorize('edit-post', $currentUser, $postToEdit);
+            // Assemble the PolicyContext (the comprehensive Evidence)
+            $context = new PolicyContext(
+                actor: $currentUser,
+                subjects: [$postToEdit]
+            );
+
+            // The PEP is called here with the PolicyContext.
+            $this->gate->authorize('edit-post', $context);
 
             // This code only runs if authorize() does not throw an exception.
             echo "Authorization successful! Updating post...";
@@ -293,7 +506,7 @@ $controller->update($currentUser, $postToEdit, ['title' => 'New Title']);
 // Output: Authorization successful! Updating post...
 ```
 
-## 8. Formal Concepts & Naming
+## 9. Formal Concepts & Naming
 
 The hub-and-spoke architecture we have discussed is an implementation of several formal industry concepts.
 
@@ -309,11 +522,11 @@ The PDP/PIP/PEP model is the classic architecture for implementing an ABAC syste
 
 ### The Mediator Pattern
 
-From a software design pattern perspective, this architecture is a clear example of the **Mediator Pattern**. 
+From a software design pattern perspective, this architecture is a clear example of the **Mediator Pattern**.
 
 The **PEP** acts as the **Mediator**. It manages and coordinates communication between the other components (the Application Code, the PDP, the PIPs). The application code only talks to the Mediator (the PEP), and is completely decoupled from the complex policy logic in the PDP. This reduces direct dependencies and makes the system easier to manage.
 
-## 9. Creating a Reusable ABAC Library
+## 10. Creating a Reusable ABAC Library
 
 It is an excellent idea and a standard practice to isolate this core logic into a reusable Composer package. This is a form of **Component-Based Development**.
 
@@ -373,6 +586,9 @@ interface PolicyDecisionPoint
 ```
 
 **`src/Gate.php` (The PEP)**
+
+This is the **concrete implementation** of the Policy Enforcement Point. It is not an interface or an abstract class because its core responsibility (orchestrating the decision and enforcing it) is generic and fully implemented.
+
 ```php
 <?php
 namespace YourVendor\AbacAuth;
@@ -381,7 +597,7 @@ use YourVendor\AbacAuth\Contracts\PolicyDecisionPoint;
 use YourVendor\AbacAuth\Contracts\PolicyInformationPoint;
 use YourVendor\AbacAuth\Exception\AuthorizationException;
 
-class Gate
+final class Gate // Recommended to be final
 {
     public function __construct(private PolicyDecisionPoint $pdp) {}
 
@@ -393,6 +609,44 @@ class Gate
     }
     // ... other helper methods like allows() / denies() ...
 }
+```
+
+**Should the `Gate` class be `final`?**
+
+Yes, it is generally **recommended to make the `Gate` class `final`**.
+
+*   **Why `final` is good:**
+    *   **Enforces Design Intent:** The `Gate` is designed to be a generic orchestrator whose core behavior should not be altered. Making it `final` prevents developers from extending it and inadvertently changing its fundamental role.
+    *   **Ensures Consistency:** It guarantees that the enforcement logic will always behave as intended, regardless of how it's used in an application.
+    *   **Improves Testability:** When you know a class cannot be extended, you can test it more confidently, as its behavior is fully encapsulated.
+    *   **Allows for Internal Optimizations:** The PHP engine can sometimes make minor optimizations for `final` classes.
+
+*   **Why you might *think* you need to extend it (and why composition is usually better):**
+    *   **Adding Logging/Metrics:** If you want to add logging or metrics around authorization calls, it's better to wrap the `Gate` in a decorator or use middleware, rather than extending it.
+    *   **Altering Enforcement Behavior:** If you need a fundamentally different way to enforce policies (e.g., not throwing an exception but returning a boolean and a reason), you're likely building a different kind of PEP, and should create a new class that *uses* the `PolicyDecisionPoint` interface, rather than extending this generic `Gate`.
+
+By making the `Gate` `final`, you clearly communicate that it's a complete, ready-to-use component that should be used via **composition** (passing it around and calling its methods), not **inheritance).
+
+**`src/Exception/AuthorizationException.php`**
+```php
+<?php
+
+namespace YourVendor\AbacAuth\Exception;
+
+use Exception;
+use Throwable;
+
+class AuthorizationException extends Exception
+{
+    public function __construct(
+        string $message = "Action is not authorized.",
+        int $code = 403,
+        ?Throwable $previous = null
+    ) {
+        parent::__construct($message, $code, $previous);
+    }
+}
+
 ```
 
 ### Library vs. Application Code
@@ -415,10 +669,17 @@ graph TD
         LibPIP["PolicyInformationPoint (Interface)"]
     end
 
+    subgraph "Your Application Code"
+        AppCode["Controller / Service"]
+        AppPDP["AppPolicy (implements PDP)"]
+        AppPIP["User/Post (implements PIP)"]
+    end
+
     AppCode -- uses --> LibGate
-    LibGate -- injects --> LibPDP
-    AppPDP -- dependency --> LibPDP
-    AppPIP -- dependency --> LibPIP
+    LibGate -- uses --> LibPDP
+    LibGate -- uses --> LibPIP
+    AppPDP -- implements --> LibPDP
+    AppPIP -- implements --> LibPIP
 ```
 
 ### How to Use the Package
@@ -429,3 +690,5 @@ A developer using your library would:
 2.  **Instantiate their custom PDP** (`$myAppPolicy = new AppPolicy();`).
 3.  **Instantiate your library's `Gate` (PEP)**, injecting their custom PDP into it (`$gate = new Gate($myAppPolicy);`).
 4.  **Use the `$gate`** in their application to authorize actions.
+
+```

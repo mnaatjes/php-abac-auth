@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # Set User and Group to match the host system user
+    user: "1004:1006"
     # Mount the project directory into the container
     volumes:
       - .:/app

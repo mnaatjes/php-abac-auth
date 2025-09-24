@@ -49,8 +49,6 @@ graph TD
         PEP -- "8. Enforce (Allow/Throw Exception)" --> AppCode;
     end
 
-    style PRP fill:#f9f,stroke:#333,stroke-width:2px
-    style PAP fill:#ccf,stroke:#333,stroke-width:2px
 ```
 
 ## 3. Concrete Examples in a Laravel-like Framework

@@ -1,0 +1,143 @@
+{
+    "policies": [
+        {
+            "name": "AllowPostEditingForOwner",
+            "description": "Allows users to edit their own posts.",
+            "effect": "permit",
+            "actions": ["edit-post", "update-post"],
+            "subjects": ["Post"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "actor_attribute": "id",
+                        "operator": "equals",
+                        "subject_attribute": "authorId"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DenyGuestPostViewing",
+            "description": "Denies guests from viewing premium posts.",
+            "effect": "deny",
+            "actions": ["view-post"],
+            "subjects": ["Post"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "actor_attribute": "role",
+                        "operator": "equals",
+                        "value": "guest"
+                    },
+                    {
+                        "subject_attribute": "isPremium",
+                        "operator": "equals",
+                        "value": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AllowAdminUniversalRead",
+            "description": "Allows users with the 'admin' role to view any resource.",
+            "effect": "permit",
+            "actions": ["view-post", "view-comment", "view-user"],
+            "subjects": ["Post", "Comment", "User"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "actor_attribute": "role",
+                        "operator": "equals",
+                        "value": "admin"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DenyDeleteOnPublishedArticles",
+            "description": "Prevents anyone, including the owner, from deleting an article once it is published.",
+            "effect": "deny",
+            "actions": ["delete-post"],
+            "subjects": ["Post"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "subject_attribute": "status",
+                        "operator": "equals",
+                        "value": "published"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AllowEditingForEditorsOrAdmins",
+            "description": "Allows a user to edit a post if they are an 'editor' OR an 'admin'.",
+            "effect": "permit",
+            "actions": ["edit-post"],
+            "subjects": ["Post"],
+            "rules": {
+                "condition": "OR",
+                "expressions": [
+                    {
+                        "actor_attribute": "role",
+                        "operator": "equals",
+                        "value": "editor"
+                    },
+                    {
+                        "actor_attribute": "role",
+                        "operator": "equals",
+                        "value": "admin"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DenyAccessOutsideBusinessHours",
+            "description": "Denies access to financial reports outside of business hours (9am-5pm).",
+            "effect": "deny",
+            "actions": ["view-financial-report"],
+            "subjects": ["FinancialReport"],
+            "rules": {
+                "condition": "OR",
+                "expressions": [
+                    {
+                        "environment_attribute": "hour",
+                        "operator": "lessThan",
+                        "value": 9
+                    },
+                    {
+                        "environment_attribute": "hour",
+                        "operator": "greaterThan",
+                        "value": 17
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AllowAuthorOrReviewerAccess",
+            "description": "Permits access to a document if the user is the author or in the list of reviewers.",
+            "effect": "permit",
+            "actions": ["view-document"],
+            "subjects": ["Document"],
+            "rules": {
+                "condition": "OR",
+                "expressions": [
+                    {
+                        "actor_attribute": "id",
+                        "operator": "equals",
+                        "subject_attribute": "authorId"
+                    },
+                    {
+                        "actor_attribute": "id",
+                        "operator": "in",
+                        "subject_attribute": "reviewerIds"
+                    }
+                ]
+            }
+        }
+    ]
+}

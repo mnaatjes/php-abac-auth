@@ -12,6 +12,7 @@
 
     use mnaatjes\ABAC\ABAC;
     use mnaatjes\ABAC\Contracts\PolicyContext;
+    use mnaatjes\ABAC\Foundation\PIP;
 
     // Implement Factory
     $pap = ABAC::createAdmin(__DIR__ . '/Data/policies.json');
@@ -19,7 +20,7 @@
 
     $pep->enforce("edit-post", new PolicyContext(
         // Actor
-        "", 
+        (new class() implements PIP {}),
         // Subjects
         [],
         // Environment

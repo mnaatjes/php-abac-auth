@@ -40,6 +40,7 @@
                 return new Policy(
                     name: $policy["name"],
                     effect: $policy["effect"],
+                    actors: $policy["actors"],
                     actions: $policy["actions"],
                     subjects: $policy["subjects"],
                     rules: $policy["rules"],

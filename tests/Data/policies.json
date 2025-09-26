@@ -4,8 +4,16 @@
             "name": "AllowPostEditingForOwner",
             "description": "Allows users to edit their own posts.",
             "effect": "permit",
-            "actions": ["edit-post", "update-post"],
-            "subjects": ["Post"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "edit-post",
+                "update-post"
+            ],
+            "subjects": [
+                "Post"
+            ],
             "rules": {
                 "condition": "AND",
                 "expressions": [
@@ -21,8 +29,15 @@
             "name": "DenyGuestPostViewing",
             "description": "Denies guests from viewing premium posts.",
             "effect": "deny",
-            "actions": ["view-post"],
-            "subjects": ["Post"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-post"
+            ],
+            "subjects": [
+                "Post"
+            ],
             "rules": {
                 "condition": "AND",
                 "expressions": [
@@ -43,8 +58,19 @@
             "name": "AllowAdminUniversalRead",
             "description": "Allows users with the 'admin' role to view any resource.",
             "effect": "permit",
-            "actions": ["view-post", "view-comment", "view-user"],
-            "subjects": ["Post", "Comment", "User"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-post",
+                "view-comment",
+                "view-user"
+            ],
+            "subjects": [
+                "Post",
+                "Comment",
+                "User"
+            ],
             "rules": {
                 "condition": "AND",
                 "expressions": [
@@ -60,8 +86,15 @@
             "name": "DenyDeleteOnPublishedArticles",
             "description": "Prevents anyone, including the owner, from deleting an article once it is published.",
             "effect": "deny",
-            "actions": ["delete-post"],
-            "subjects": ["Post"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "delete-post"
+            ],
+            "subjects": [
+                "Post"
+            ],
             "rules": {
                 "condition": "AND",
                 "expressions": [
@@ -77,8 +110,15 @@
             "name": "AllowEditingForEditorsOrAdmins",
             "description": "Allows a user to edit a post if they are an 'editor' OR an 'admin'.",
             "effect": "permit",
-            "actions": ["edit-post"],
-            "subjects": ["Post"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "edit-post"
+            ],
+            "subjects": [
+                "Post"
+            ],
             "rules": {
                 "condition": "OR",
                 "expressions": [
@@ -99,8 +139,15 @@
             "name": "DenyAccessOutsideBusinessHours",
             "description": "Denies access to financial reports outside of business hours (9am-5pm).",
             "effect": "deny",
-            "actions": ["view-financial-report"],
-            "subjects": ["FinancialReport"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-financial-report"
+            ],
+            "subjects": [
+                "FinancialReport"
+            ],
             "rules": {
                 "condition": "OR",
                 "expressions": [
@@ -121,8 +168,15 @@
             "name": "AllowAuthorOrReviewerAccess",
             "description": "Permits access to a document if the user is the author or in the list of reviewers.",
             "effect": "permit",
-            "actions": ["view-document"],
-            "subjects": ["Document"],
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-document"
+            ],
+            "subjects": [
+                "Document"
+            ],
             "rules": {
                 "condition": "OR",
                 "expressions": [
@@ -135,6 +189,147 @@
                         "actor_attribute": "id",
                         "operator": "in",
                         "subject_attribute": "reviewerIds"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AllowViewingOfPublishedContent",
+            "description": "Permits viewing a subject only if it is published.",
+            "effect": "permit",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-post",
+                "view-document"
+            ],
+            "subjects": [
+                "Post",
+                "Document"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isTrue",
+                        "subject_attribute": "isPublished"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DenyActionsOnInactiveUsers",
+            "description": "Denies actions performed on users who are not active.",
+            "effect": "deny",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "edit-user",
+                "delete-user"
+            ],
+            "subjects": [
+                "User"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isFalse",
+                        "subject_attribute": "isActive"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RequireDepartmentForReport",
+            "description": "A user must have a department to view a financial report.",
+            "effect": "permit",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-financial-report"
+            ],
+            "subjects": [
+                "FinancialReport"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isNotNull",
+                        "actor_attribute": "department"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DenyAccessToUnassignedUsers",
+            "description": "Denies access if a user has a null role.",
+            "effect": "deny",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-project"
+            ],
+            "subjects": [
+                "Project"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isNull",
+                        "actor_attribute": "role"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AllowDeleteOnPostWithNoComments",
+            "description": "Permits deleting a post only if its comment list is empty.",
+            "effect": "permit",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "delete-post"
+            ],
+            "subjects": [
+                "Post"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isEmpty",
+                        "subject_attribute": "commentIds"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RequireMfaForSecureAction",
+            "description": "Permits a secure action only if an MFA timestamp exists in the environment.",
+            "effect": "permit",
+            "actors": [
+                "User"
+            ],
+            "actions": [
+                "view-financial-report"
+            ],
+            "subjects": [
+                "FinancialReport"
+            ],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "operator": "isNotEmpty",
+                        "environment_attribute": "mfaTimestamp"
                     }
                 ]
             }

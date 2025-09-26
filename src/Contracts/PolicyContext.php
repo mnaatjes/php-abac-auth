@@ -8,8 +8,17 @@
      */
     final readonly class PolicyContext {
         public function __construct(
-            public string $actor,
+            /**
+             * @param PIP $actor
+             */
+            public PIP $actor,
+            /**
+             * @param PIP[] $subjects - Indexed array of Policy Information Points
+             */
             public array $subjects=[],
+            /**
+             * @param mixed[] $environment - Assoc Array of Environmental Properties
+             */
             public array $environment=[]
         ) {
             // Validate each subject is a PolicyInformationPoint

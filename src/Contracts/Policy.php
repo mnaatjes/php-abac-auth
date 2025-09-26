@@ -8,38 +8,35 @@
      * Contains rules that define access permissions based on attributes.
      */
     final readonly class Policy {
+
+        private array $expressions;
+
         public function __construct(
-            public string $name,
-            public string $effect, // "permit" or "deny"
-            public array $actions,
-            public array $subjects,
-            public array $rules,
-            public ?string $description=NULL
-        ) {}
+            private string $name,
+            private string $effect, // "permit" or "deny"
+            private array $actors,
+            private array $actions,
+            private array $subjects,
+            private array $rules,
+            private ?string $description=NULL
+        ) {
+            // Determine Properties of each Expression
+            $acc = [];
+            foreach($this->rules["expressions"] as $expression){
+                $acc[] = $expression;
+            }
+            $this->expressions = $acc;
+            // Map each expression element as an object
+        }
 
         public function getName(): string{return $this->name;}
         public function getEffect(): string{return $this->effect;}
         public function getRules(): array{return $this->rules;}
         public function getDescription(): string{return $this->description;}
+        public function getActors(): array{return $this->subjects;}
         public function getSubjects(): array{return $this->subjects;}
+        public function getExpressions(): array{return $this->expressions;}
         
-        /**-------------------------------------------------------------------------*/
-        /**
-         * Find Actors - if actor_attribute assigned - in expressions
-         * 
-         * @return array
-         */
-        /**-------------------------------------------------------------------------*/
-        public function getActors(): array{
-            return array_reduce($this->rules["expressions"], function($acc, $exp){
-                // Perform check
-                if(array_key_exists("actor_attribute", $exp)){
-                    $acc[] = $exp["actor_attribute"];
-                }
-                // Return default
-                return $acc;
-            }, []);
-        }
 
         /**-------------------------------------------------------------------------*/
         /**

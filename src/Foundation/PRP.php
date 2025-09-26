@@ -16,5 +16,6 @@
         public function findByName(string $name): ?Policy{return $this->pm->findByName($name);}
         public function findByActor(string $actor): array{return $this->pm->findByActor($actor);}
         public function findBySubject(string $subject): array{return $this->pm->findBySubject($subject);}
+        public function findAll(){return $this->pm->findAll();}
     }
 ?>

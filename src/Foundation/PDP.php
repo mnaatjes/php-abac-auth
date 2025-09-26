@@ -29,6 +29,6 @@
         }
 
         private function doesPolicyApply(){}
-        private function evaluateExpression(){}
+        private function evaluateExpression(array $expression, PolicyContext $context){}
     }
 ?>

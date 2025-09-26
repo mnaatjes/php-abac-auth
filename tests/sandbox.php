@@ -7,6 +7,8 @@
     require_once __DIR__ . '/../vendor/autoload.php';
 
     use mnaatjes\ABAC\ABAC;
+use mnaatjes\ABAC\Contracts\Expressions\BinaryExpression;
+use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
 use mnaatjes\ABAC\Contracts\Expressions\UnaryExpression;
 use mnaatjes\ABAC\Contracts\PolicyContext;
     use mnaatjes\ABAC\Foundation\PIP;
@@ -40,13 +42,14 @@ use mnaatjes\ABAC\Contracts\PolicyContext;
     foreach($results as $exp){
         if(is_a($exp, UnaryExpression::class)){
             $countUnary++;
+        } else if(is_a($exp, BinaryExpression::class)){
+            $countBinary++;
+        } else if(is_a($exp, FunctionExpression::class)){
+            $countFunc++;
         }
     }
 
-    var_dump("Unary: " . $countUnary);
-    var_dump("Binary: " . $countBinary);
-    var_dump("Function: " . $countFunc);
-    // Get Required Properties of Policy for PIP
-        // Rules->Expressions[]->actor_attribute
-        // Rules->Expressions[]->subject_attribute
+    var_dump("Unary:     " . $countUnary);
+    var_dump("Binary:   " . $countBinary);
+    var_dump("Function:  " . $countFunc);
 ?>

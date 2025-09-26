@@ -4,6 +4,7 @@
     use mnaatjes\ABAC\Contracts\Expressions\BinaryExpression;
     use mnaatjes\ABAC\Contracts\Expressions\UnaryExpression;
     use mnaatjes\ABAC\Contracts\Attribute;
+use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
 
     /**
      * Expression Factory
@@ -69,14 +70,13 @@
              */
             $count = count($expression);
 
-
             // Determine Cases
             if($count === 2){
                 // Unary Expression OR Function Expression
                 // Check Property Names
-                if(isset($expression["function"]) && (isset($expression["argument"]) && is_array($expression["argument"]))){
-                    // Function Expression
-
+                if(isset($expression["function"])){
+                    // Create and Return Function Expression
+                    return self::createFunctionExpression($expression);
 
                 } else if(isset($expression["operator"])){
                     // Unary Expression
@@ -128,7 +128,7 @@
          * @return string
          */
         /**-------------------------------------------------------------------------*/
-        private static function extractEntity(array $keys): string{
+        private static function extractEntityFromKeys(array $keys): string{
             // Cycle through keys and return entity if matched
             foreach($keys as $key){
                 $entity = array_search($key, self::ATTRIBUTE_ENTITIES);
@@ -138,6 +138,19 @@
             }        
             // Cycle completed with no resolution
             throw new \Exception("Unable to resolve Entity from Expression!");
+        }
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * @param string $property - Property name of entity
+         * @return string Entity string
+         */
+        /**-------------------------------------------------------------------------*/
+        private static function extractEntityFromProperty(string $property): string{
+            // Find length
+            $pos = strpos($property, "_attribute");
+            // Return string
+            return (substr($property, 0, $pos));
         }
 
         /**-------------------------------------------------------------------------*/
@@ -175,7 +188,7 @@
 
             } else {
                 // Entity assigned to an attribute
-                $entity = self::extractEntity(array_keys($expression));
+                $entity = self::extractEntityFromKeys(array_keys($expression));
                 $name   = $expression[$entity . "_attribute"];
             }
 
@@ -193,26 +206,137 @@
             );
         }
 
+        /**-------------------------------------------------------------------------*/
         /**
          * Possible Expression Patterns:
          * 
          * - Attribute vs Literal Value
          * - Attribute vs Attribute
+         * 
+         * @param array $expression - Expression array from Policy
+         * @return BinaryExpression
          */
+        /**-------------------------------------------------------------------------*/
         private static function createBinaryExpression(array $expression): BinaryExpression{
+            // Verify Operator
+            if(!isset($expression["operator"])){
+                throw new \Exception("Binary Expression is missing operator!");
+            }
+
             /**
-             * @var int $attributeCount - Number of properties with suffix "_attribute"
+             * @var string $operator
              */
-            $attributeCount = array_reduce(array_keys($expression), function($count, $property){
+            $operator = $expression["operator"];
+
+            /**
+             * @var array $attributes - Collected attributes from Expression
+             */
+            $attributes = [];
+
+            foreach($expression as $property => $definition){
+                // Check for attribute
+                // Create attribute object if exists
                 if(str_ends_with($property, "_attribute")){
-                    $count++;
+                    // Determine Entity
+                    $entity = self::extractEntityFromProperty($property);
+
+                    // Determine Name
+                    $name = $definition;
+
+                    // Assign Literal Value
+                    $literalValue = NULL;
+
+                    // Push to container array
+                    $attributes[] = new Attribute(
+                        entity: $entity,
+                        name: $name,
+                        literal: $literalValue
+                    );
                 }
-                return $count;
-            }, 0);
+            }
 
-            var_dump($attributeCount);
+            // Count attributes to determine Binary Expression Pattern
+            if(count($attributes) === 2){
+                // Attribute vs Attribute Pattern
+                // Assemble and return Binary Expression
+                return new BinaryExpression(
+                    leftHand: $attributes[0],
+                    operator: $operator,
+                    rightHand: $attributes[1]
+                );
 
-            return new BinaryExpression();
+            } else if(count($attributes) === 1){
+                // Attribute vs Literal
+                // Check for literal
+                if(!isset($expression["value"])){
+                    throw new \Exception("Binary expression is missing literal Right Hand Argument!");
+                }
+
+                /**
+                 * @var mixed $literal - "Value" property of Binary Expression
+                 */
+                $literal = $expression["value"];
+
+                // Assemble and return Binary Expression
+                return new BinaryExpression(
+                    leftHand: $attributes[0],
+                    operator: $operator,
+                    rightHand: $literal
+                );
+
+            } else {
+                // Failure Condition
+                // Cannot Resolve
+                throw new \Exception("Unable to resolve Binary Expression! Please review JSON properties");
+            }
+        }
+
+        private static function createFunctionExpression(array $expression): FunctionExpression{
+            // Verify and Assign Function String
+            if(!isset($expression["function"])){
+                throw new \Exception("Function Expression missing 'Function' property!");
+            }
+
+            /**
+             * @var string $functionName
+             */
+            $functionName = $expression["function"];
+
+            // Verify Arguments Property Exists
+            if(!isset($expression["arguments"])){
+                throw new \Exception("Function Expression is missing 'Arguments' property!");
+            }
+
+            /**
+             * @var array<string|Attribute> $arguments - Arguments collected from Expression
+             */
+            $arguments = [];
+
+            foreach($expression as $property=>$description){
+                // Check for Attributes
+                if(str_ends_with($property, "_attribute")){
+                    // Evaluate and Store Attribute
+
+                    // Push to arguments
+                    $arguments[] = new Attribute(
+                        entity: self::extractEntityFromProperty($property),
+                        name: $description,
+                        literal: NULL
+                    );
+                }
+
+                // Check for Literals
+                if($property === "value"){
+                    // Push to arguments
+                    $arguments[] = $description;
+                }
+            }
+
+            // Return Expression Object
+            return new FunctionExpression(
+                functionName: $functionName,
+                arguments: []
+            );
         }
     }
 

@@ -1,6 +1,166 @@
 {
     "policies": [
         {
+            "name": "policy_func_starts_with",
+            "description": "Permits if actor's name starts with 'Admin'.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["do-admin-stuff"],
+            "subjects": ["System"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "startsWith",
+                        "arguments": [
+                            { "actor_attribute": "name" },
+                            { "value": "Admin" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_ends_with",
+            "description": "Permits if subject filename ends with '.log'.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["view-log"],
+            "subjects": ["File"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "endsWith",
+                        "arguments": [
+                            { "subject_attribute": "filename" },
+                            { "value": ".log" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_is_between",
+            "description": "Permits if subject score is between 90 and 100.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["view-score"],
+            "subjects": ["TestResult"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "isBetween",
+                        "arguments": [
+                            { "subject_attribute": "score" },
+                            { "value": 90 },
+                            { "value": 100 }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_ip_match",
+            "description": "Permits if actor's IP matches the environment IP.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["access-internal"],
+            "subjects": ["Resource"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "ipMatches",
+                        "arguments": [
+                            { "actor_attribute": "ipAddress" },
+                            { "environment_attribute": "sourceIp" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_is_member_of",
+            "description": "Permits if actor's group is a member of the subject's owning group.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["view-resource"],
+            "subjects": ["Resource"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "isMemberOf",
+                        "arguments": [
+                            { "actor_attribute": "group" },
+                            { "subject_attribute": "owningGroup" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_has_domain",
+            "description": "Permits if actor's email has the specified domain.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["login"],
+            "subjects": ["System"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "hasDomain",
+                        "arguments": [
+                            { "actor_attribute": "email" },
+                            { "value": "example.com" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_time_match",
+            "description": "Permits if request time is within business hours.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["access-reports"],
+            "subjects": ["Report"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "isBusinessHours",
+                        "arguments": [
+                            { "environment_attribute": "requestTime" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "policy_func_semver_check",
+            "description": "Permits if subject version is greater than 2.1.0.",
+            "effect": "permit",
+            "actors": ["User"],
+            "actions": ["use-feature"],
+            "subjects": ["Application"],
+            "rules": {
+                "condition": "AND",
+                "expressions": [
+                    {
+                        "function": "semverGreaterThan",
+                        "arguments": [
+                            { "subject_attribute": "version" },
+                            { "value": "2.1.0" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
             "name": "AllowPostEditingForOwner",
             "description": "Allows users to edit their own posts.",
             "effect": "permit",

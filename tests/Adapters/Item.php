@@ -3,13 +3,11 @@
     namespace mnaatjes\ABAC\Tests\Adapters;
     use mnaatjes\ABAC\Foundation\PIP;
 
-    class User implements PIP {
-        
+    class Item implements PIP {
         public function __construct(
-            private string $role
+            private bool $premium
         ){}
 
-        public function getRole(){return $this->role;}
+        public function isPremium(){return $this->premium;}
     }
-
 ?>

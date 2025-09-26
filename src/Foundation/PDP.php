@@ -5,6 +5,7 @@
     use mnaatjes\ABAC\Contracts\PolicyContext;
     use mnaatjes\ABAC\Foundation\PRP;
     
+    /**-------------------------------------------------------------------------*/
     /**
      * PDP: Policy Decision Point
      * The component that evaluates access requests against policies.
@@ -13,11 +14,24 @@
      * - Evaluates policies against request context
      * - Returns permit or deny decision
      */
+    /**-------------------------------------------------------------------------*/
     final class PDP {
         
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
         public function __construct(protected PRP $prp){}
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
         public function decide(string $action, PolicyContext $context): Decision{
-            // TODO: Complete Evaluation Logic
+            // Find Policy
+            $policies = $this->prp->findTargetPolicies($action, $context);
 
             // Evaluate DENY Policies First
 
@@ -28,7 +42,31 @@
             return new Decision(false, "Unable to resolve decision!");
         }
 
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
         private function doesPolicyApply(){}
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
         private function evaluateExpression(array $expression, PolicyContext $context){}
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
+        private function evaluateRulesForPolicy(){}
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
     }
 ?>

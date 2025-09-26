@@ -25,7 +25,8 @@
 
             // Evaluate Decision
             if($descision->allowed === false){
-                throw new \Exception($descision->message ?? "Action `{$action}` is NOT allowed!");
+                //throw new \Exception($descision->message ?? "Action `{$action}` is NOT allowed!");
+                var_dump("Decision: False");
             }
         }
     }

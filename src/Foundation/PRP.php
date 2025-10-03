@@ -28,71 +28,51 @@
          */
         /**-------------------------------------------------------------------------*/
         public function findTargetPolicies(string $action, PolicyContext $context){
-            // Find Policies with aligned Action
-            $policiesWithAction = $this->findPolicyForAction($action);
+            // Grab policies from Policy Manager
+            $policies = $this->pm->findAll();
 
-            // Extract Contextual Information
-            // Get Actor string
-            $actorName = $this->getClassShortName($context->getActor()) ?? NULL;
-
-            // Get Subject string
-            $subjectNames = array_map(function($pip){
-                return $this->getClassShortName($pip) ?? NULL;
-            }, $context->getSubjects());
-
-            // Filter by Actor
-            $policiesWithActor = $this->filterByActor($actorName, $policiesWithAction) ?? NULL;
-
-            // Filter by Subjects
-            $policiesWithSubjects = $this->filterBySubjects($subjectNames, $policiesWithActor);
-
-            // TODO: Check Environment
-
-            // Return array of refined policies
-            return $policiesWithSubjects;
-
-        }
-
-        /**-------------------------------------------------------------------------*/
-        /**
-         * 
-         */
-        /**-------------------------------------------------------------------------*/
-        private function filterBySubjects(array $subjectNames, array $policies){
-            // Filter by Subjects
+            // Declare results
             $results = [];
 
-            // Cycle Through Policies
-            foreach($policies as $policy){
-                // Cycle through Subjects
-                $results = array_merge(
-                    $results, array_reduce(
-                        $subjectNames, function($acc, $name) use($policy){
-                            // Find Subject
-                            if($policy->hasSubject($name)){
-                                $acc[] = $policy;
-                            }
+            // Get class names for the context objects
+            $contextActor       = $this->getClassShortName($context->getActor());
+            $contextSubjects    = array_map(function($obj){
+                return $this->getClassShortName($obj);
+            }, $context->getSubjects());
 
-                            // Return
-                            return $acc;
-                        }, []
-                    )
-                );
+            // Loop policies and check for matches
+            foreach($policies as $policy){
+                // Skip if action not found
+                if(!in_array($action, $policy->getActions())){
+                    continue;
+                }
+
+                // Skip if actor does not match
+                if(!in_array($contextActor, $policy->getActors())){
+                    continue;
+                }
+                
+
+                // Check for required subjects
+                if(!empty($policy->getSubjects())){
+                    // Create diff array of subjects
+                    // If diff array is populated - there are missing req. subjects
+                    $missing = array_diff($policy->getSubjects(), $contextSubjects);
+
+                    // Evaluate missing array
+                    // Skip if populated
+                    if(!empty($missing)){
+                        continue;
+                    }
+                }
+
+                // Policies that passed test
+                // Push policy
+                $results[] = $policy;
             }
 
-            // Return array
+            // Return found policies
             return $results;
-        }
-
-        /**-------------------------------------------------------------------------*/
-        /**
-         * 
-         */
-        /**-------------------------------------------------------------------------*/
-        private function findPolicyForAction(string $action){
-            return array_filter($this->findAll(), function($policy) use($action){
-                return in_array($action, $policy->getActions());
-            });
         }
 
         /**-------------------------------------------------------------------------*/
@@ -105,26 +85,5 @@
         }
 
         /**-------------------------------------------------------------------------*/
-        /**
-         * 
-         */
-        /**-------------------------------------------------------------------------*/
-        private function filterByActor(string|NULL $actor_name, array $policies){
-            // Check if actor NULL
-            if(is_null($actor_name)){
-                return NULL;
-            }
-
-            // Reduce Array of Policies
-            return array_reduce($policies, function($acc, $policy) use($actor_name){
-                // Parse
-                if($policy->hasActor($actor_name)){
-                    $acc[] = $policy;
-                }
-
-                // Return acc
-                return $acc;
-            }, []);
-        }
     }
 ?>

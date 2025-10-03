@@ -3,6 +3,7 @@
     namespace mnaatjes\ABAC\Adapters\PolicyManagers;
     use mnaatjes\ABAC\Adapters\PolicyManagers\FilePolicyManager;
     use mnaatjes\ABAC\Contracts\Policy;
+    use Symfony\Component\Yaml\Yaml;
 
     class YAMLPolicyManager extends FilePolicyManager {
         
@@ -29,10 +30,9 @@
              * Assoc. Array of JSON data
              * @var array $data
              */
-            $data = json_decode($content, true);
-
-            if(json_last_error() !== JSON_ERROR_NONE){
-                throw new \Exception("Unable to parse JSON data in Policy File: " . $this->filepath);
+            $data = Yaml::parse($content);
+            if($data === false){
+                throw new \Exception("Unable to parse YAML data in Policy File: " . $this->filepath);
             }
 
             // Map Content and Return
@@ -40,9 +40,10 @@
                 return new Policy(
                     name: $policy["name"],
                     effect: $policy["effect"],
+                    actors: $policy["actors"],
                     actions: $policy["actions"],
                     subjects: $policy["subjects"],
-                    rules: $policy["rules"],
+                    rules_array: $policy["rules"],
                     description: $policy["description"],
                 );
             }, $data["policies"]);

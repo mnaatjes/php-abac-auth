@@ -13,7 +13,7 @@
             public ?int $code=NULL
         ){}
 
-        public static function allow(): self{return new self(true);}
+        public static function permit(): self{return new self(true);}
         public static function deny(?string $message=NULL, ?int $code=NULL): self{return new self(false, $message, $code);}
     }
 ?>

@@ -9,7 +9,7 @@
      */
     final readonly class Policy {
 
-        private Rule $rules;
+        private Rules $rules;
 
         /**-------------------------------------------------------------------------*/
         /**
@@ -26,7 +26,7 @@
             private ?string $description=NULL
         ) {
             // Assign Rule and Expressions Objects
-            $this->rules = new Rule(
+            $this->rules = new Rules(
                 $rules_array["condition"],
                 $rules_array["expressions"]
             );
@@ -34,9 +34,9 @@
 
         public function getName(): string{return $this->name;}
         public function getEffect(): string{return $this->effect;}
-        public function getRules(): Rule{return $this->rules;}
+        public function getRules(): Rules{return $this->rules;}
         public function getDescription(): string{return $this->description;}
-        public function getActors(): array{return $this->subjects;}
+        public function getActors(): array{return $this->actors;}
         public function getActions(): array{return $this->actions;}
         public function getSubjects(): array{return $this->subjects;}
         public function getExpressions(): array{return $this->rules->getExpressions();}
@@ -62,6 +62,21 @@
         /**-------------------------------------------------------------------------*/
         public function hasSubject(string $subject): bool{
             return in_array($subject, $this->getSubjects());
+        }
+
+        /**-------------------------------------------------------------------------*/
+
+        /**-------------------------------------------------------------------------*/
+        public function toArray(){
+            return [
+                "name"      => $this->getName(),
+                "effect"    => $this->getEffect(),
+                "actors"    => $this->getActors(),
+                "actions"   => $this->getActions(),
+                "subjects"  => $this->getSubjects(),
+                "rules"     => $this->rules->toArray(),
+                "description" => $this->getDescription()
+            ];
         }
     }
 ?>

@@ -4,6 +4,14 @@
     use mnaatjes\ABAC\Contracts\PolicyManager;
     use mnaatjes\ABAC\Contracts\Policy;
 
+    /**
+     * FilePolicyManager
+     * 
+     * @package mnaatjes\ABAC\Adapters\PolicyManagers
+     * @abstract
+     * @implements PolicyManager
+     * 
+     */
     abstract class FilePolicyManager implements PolicyManager {
         private ?array $cache=[];
 
@@ -17,6 +25,9 @@
          */
         private int $lastReadTS=0;
 
+        /**
+         * @var string $filepath Filepath
+         */
         protected string $filepath;
 
         /**-------------------------------------------------------------------------*/

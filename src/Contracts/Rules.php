@@ -1,15 +1,26 @@
 <?php
 
-    namespace mnaatjes\ABAC\Contracts\Rules;
+    namespace mnaatjes\ABAC\Contracts;
     use mnaatjes\ABAC\Support\ExpressionFactory;
 
-    final readonly class Rule {
+    /**
+     * Rules
+     * 
+     * @package mnaatjes\ABAC\Contracts
+     * @version 1.0
+     * @since 1.0
+     */
+    final readonly class Rules {
 
         private array $expressions;
         
         /**-------------------------------------------------------------------------*/
         /**
+         * Rules
          * 
+         * @param string $condition
+         * @param array $expressions
+         * @return void
          */
         /**-------------------------------------------------------------------------*/
         public function __construct(
@@ -32,16 +43,36 @@
 
         /**-------------------------------------------------------------------------*/
         /**
+         * Get Condition
          * 
+         * @return string
          */
         /**-------------------------------------------------------------------------*/
-        public function getCondition(){return $this->condition;}
+        public function getCondition(): string{return $this->condition;}
         /**-------------------------------------------------------------------------*/
         /**
+         * Get Expressions
          * 
+         * @return array
          */
         /**-------------------------------------------------------------------------*/
         public function getExpressions(): array{return $this->expressions;}
+
+        /**-------------------------------------------------------------------------*/
+        /**
+         * toArray
+         * 
+         * @return array
+         */
+        /**-------------------------------------------------------------------------*/
+        public function toArray(): array{
+            return [
+                "condition"     => $this->getCondition(),
+                "expressions"   => array_map(function($exp){
+                    return $exp->toArray();
+                }, $this->getExpressions())
+            ];
+        }
     }
 
 ?>

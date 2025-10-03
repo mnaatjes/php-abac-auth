@@ -4,7 +4,8 @@
     use mnaatjes\ABAC\Contracts\Expressions\BinaryExpression;
     use mnaatjes\ABAC\Contracts\Expressions\UnaryExpression;
     use mnaatjes\ABAC\Contracts\Attribute;
-use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
+    use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
+    use mnaatjes\ABAC\Support\FunctionRegistry;
 
     /**
      * Expression Factory
@@ -291,6 +292,15 @@ use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
             }
         }
 
+        /**-------------------------------------------------------------------------*/
+        /**
+         * Create Function Expression
+         * 
+         * @param array $expression
+         * @return FunctionExpression
+         * 
+         */
+        /**-------------------------------------------------------------------------*/
         private static function createFunctionExpression(array $expression): FunctionExpression{
             // Verify and Assign Function String
             if(!isset($expression["function"])){
@@ -335,7 +345,8 @@ use mnaatjes\ABAC\Contracts\Expressions\FunctionExpression;
             // Return Expression Object
             return new FunctionExpression(
                 functionName: $functionName,
-                arguments: []
+                arguments: [],
+                registry: FunctionRegistry::getInstance()
             );
         }
     }

@@ -15,18 +15,21 @@
     final class PEP {
         private PDP $pdp;
 
+        /**-------------------------------------------------------------------------*/
+        /**-------------------------------------------------------------------------*/
         public function __construct(PDP $pdp) {
             $this->pdp = $pdp;
         }
 
+        /**-------------------------------------------------------------------------*/
+        /**-------------------------------------------------------------------------*/
         public function enforce(string $action, PolicyContext $context): void {
             // Resolve Decision
             $descision = $this->pdp->decide($action, $context);
 
             // Evaluate Decision
             if($descision->allowed === false){
-                //throw new \Exception($descision->message ?? "Action `{$action}` is NOT allowed!");
-                var_dump("Decision: False");
+                throw new \Exception($descision->message ?? "Action `{$action}` is NOT allowed!");
             }
         }
     }

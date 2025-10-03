@@ -4,6 +4,16 @@
     use mnaatjes\ABAC\Adapters\PolicyManagers\FilePolicyManager;
     use mnaatjes\ABAC\Contracts\Policy;
 
+    /**
+     * JSONPolicyManager
+     * 
+     * @package mnaatjes\ABAC
+     * @version 1.0
+     * @since 1.0
+     * @category PolicyManagers
+     * @see FilePolicyManager
+     * 
+     */
     class JSONPolicyManager extends FilePolicyManager {
         
         /**-------------------------------------------------------------------------*/
@@ -43,7 +53,7 @@
                     actors: $policy["actors"],
                     actions: $policy["actions"],
                     subjects: $policy["subjects"],
-                    rules: $policy["rules"],
+                    rules_array: $policy["rules"],
                     description: $policy["description"],
                 );
             }, $data["policies"]);

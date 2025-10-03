@@ -20,10 +20,10 @@
     
     $auth->enforce("view-post", new PolicyContext(
         // Actor
-        new User("admin"),
+        new User("guest"),
         // Subjects
         [
-            new Post(false)
+            new Post(true)
         ],
         // Environment
         []

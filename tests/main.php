@@ -11,8 +11,5 @@
     require_once __DIR__ . '/../vendor/autoload.php';
 
     use mnaatjes\ABAC\ABAC;
-    use mnaatjes\ABAC\Tests\Unit\Contracts\Expressions\UnaryExpressionTest;
-
-    $test = new UnaryExpressionTest('test');
-    var_dump($test);
+    use mnaatjes\ABAC\Tests\Unit\Adapters\PolicyManagers\JSONPolicyManagerTest;
 ?>

@@ -8,7 +8,16 @@
     use mnaatjes\ABAC\Contracts\Attribute;
     use mnaatjes\ABAC\Contracts\Expressions\UnaryExpression;
 
+    /**
+     * UnaryExpressionTest
+     * 
+     * @covers \mnaatjes\ABAC\Contracts\Expressions\UnaryExpression
+     * @covers \mnaatjes\ABAC\Contracts\Expressions\UnaryExpression::evaluate
+     * 
+     * @package mnaatjes\ABAC\Tests\Unit\Contracts\Expressions
+     */
     class UnaryExpressionTest extends TestCase {
+        /**-------------------------------------------------------------------------*/
         /**
          * Test that the ! operator inverts a true value
          *  - !true = false
@@ -20,6 +29,7 @@
          * 
          * @test
          */
+        /**-------------------------------------------------------------------------*/
         public function test_not_operator_inverts_true_value(): void {
             // Arrange
             // Define Context

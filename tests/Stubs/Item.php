@@ -1,8 +1,12 @@
 <?php
 
-    namespace mnaatjes\ABAC\Tests\Adapters;
+    namespace mnaatjes\ABAC\Tests\Stubs;
     use mnaatjes\ABAC\Foundation\PIP;
 
+    /**
+     * Item
+     * 
+     */
     class Item implements PIP {
         public function __construct(
             private bool $premium

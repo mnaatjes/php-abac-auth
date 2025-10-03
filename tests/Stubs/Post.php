@@ -1,6 +1,6 @@
 <?php
 
-    namespace mnaatjes\ABAC\Tests\Adapters;
+    namespace mnaatjes\ABAC\Tests\Stubs;
     use mnaatjes\ABAC\Foundation\PIP;
 
     class Post implements PIP {

@@ -11,20 +11,8 @@
     require_once __DIR__ . '/../vendor/autoload.php';
 
     use mnaatjes\ABAC\ABAC;
-    use mnaatjes\ABAC\Contracts\PolicyContext;
-    use mnaatjes\ABAC\Foundation\PIP;
+    use mnaatjes\ABAC\Tests\Unit\Contracts\Expressions\UnaryExpressionTest;
 
-    // Implement Factory
-    $pap = ABAC::createAdmin(__DIR__ . '/Data/policies.json');
-    $pep = ABAC::createRuntime(__DIR__ . '/Data/policies.json');
-
-    $pep->enforce("edit-post", new PolicyContext(
-        // Actor
-        (new class() implements PIP {}),
-        // Subjects
-        [],
-        // Environment
-        []
-    ));
-
+    $test = new UnaryExpressionTest('test');
+    var_dump($test);
 ?>

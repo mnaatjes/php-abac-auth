@@ -10,6 +10,5 @@
     // require autoloader
     require_once __DIR__ . '/../vendor/autoload.php';
 
-    use mnaatjes\ABAC\ABAC;
-    use mnaatjes\ABAC\Tests\Unit\Adapters\PolicyManagers\JSONPolicyManagerTest;
+    
 ?>

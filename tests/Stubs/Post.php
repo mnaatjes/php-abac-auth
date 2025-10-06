@@ -1,14 +1,23 @@
 <?php
 
-    namespace mnaatjes\ABAC\Tests\Stubs;
-    use mnaatjes\ABAC\Foundation\PIP;
+namespace mnaatjes\ABAC\Tests\Stubs;
 
-    class Post implements PIP {
-        public function __construct(
-            private bool $premium
-        ){}
+use mnaatjes\ABAC\Foundation\PIP;
 
-        public function isPremium(){return $this->premium;}
+class Post implements PIP
+{
+    public function __construct(
+        private bool $premium,
+        private string $status
+    ){}
+
+    public function isPremium(): bool
+    {
+        return $this->premium;
     }
 
-?>
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+}

@@ -54,14 +54,12 @@
                 
 
                 // Check for required subjects
-                if(!empty($policy->getSubjects())){
-                    // Create diff array of subjects
-                    // If diff array is populated - there are missing req. subjects
-                    $missing = array_diff($policy->getSubjects(), $contextSubjects);
+                if (!empty($policy->getSubjects())) {
+                    // Find the intersection of subjects between the policy and the context.
+                    $intersection = array_intersect($policy->getSubjects(), $contextSubjects);
 
-                    // Evaluate missing array
-                    // Skip if populated
-                    if(!empty($missing)){
+                    // If there is no intersection, the context lacks a required subject.
+                    if (empty($intersection)) {
                         continue;
                     }
                 }

@@ -1,15 +1,16 @@
 <?php
 
-    namespace mnaatjes\ABAC\Tests\Stubs;
-    use mnaatjes\ABAC\Foundation\PIP;
+namespace mnaatjes\ABAC\Tests\Stubs;
 
-    class User implements PIP {
-        
-        public function __construct(
-            private string $role
-        ){}
+use mnaatjes\ABAC\Foundation\PIP;
 
-        public function getRole(){return $this->role;}
+class User implements PIP
+{
+    public function __construct(
+        private string $role
+    ){}
+
+    public function getRole(){
+        return $this->role;
     }
-
-?>
+}

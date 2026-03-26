@@ -1,4 +1,8 @@
-# Git
-
-# Composer
-vendor/
+/vendor/
+/.phpunit.cache/
+/.vscode/
+/composer.lock
+.env
+.php-cs-fixer.cache
+.phpunit.result.cache
+/coverage/

@@ -1,9 +1,20 @@
+# Composer
 /vendor/
-/.phpunit.cache/
-/.vscode/
 /composer.lock
-.env
 .php-cs-fixer.cache
-.phpunit.result.cache
 /coverage/
+
+# Testing Regime
+/.phpunit.cache/
+.phpunit.result.cache
+
+# Environment
+.env
+
+# VSCode
 .devcontainer
+/.vscode/
+
+# Former Docker Environment
+docker-compose.yml
+Dockerfile

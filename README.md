@@ -23,7 +23,7 @@ The library follows the standard ABAC architecture:
 ## Installation
 
 ```bash
-composer require mnaatjes/abac-auth
+composer require mnaatjes/abac-auth:0.1.0
 ```
 
 ## Quick Start

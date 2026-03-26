@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated `.gitignore` for better environment management.
 - Refactored `README.md` to provide clearer project overview and quick start guide.
+- Removed Docker development environment from core repository (moved to a host-based PHP environment).
+- Updated `composer.json` to formally declare required PHP extensions (`ext-json`, `ext-xml`, etc.).
 
 ### Fixed
 - Permission issues with Docker-generated cache files (resolved via ownership reclamation).

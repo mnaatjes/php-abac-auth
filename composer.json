@@ -2,14 +2,25 @@
     "name": "mnaatjes/abac-auth",
     "type": "library",
     "license": "MIT",
-    "authors": [{
-        "name": "Michael Naatjes",
-        "email": "michael.naatjes87@gmail.com"
-    }],
+    "authors": [
+        {
+            "name": "Michael Naatjes",
+            "email": "michael.naatjes87@gmail.com"
+        }
+    ],
     "description": "A simple, reusable library for Attribute-Based Access Control.",
     "require": {
         "php": ">=8.1",
+        "ext-json": "*",
         "symfony/yaml": "^6.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "ext-xml": "*",
+        "ext-xmlwriter": "*"
     },
     "autoload": {
         "psr-4": {
@@ -22,7 +33,8 @@
             "mnaatjes\\ABAC\\Tests\\Stubs\\": "tests/Stubs"
         }
     },
-    "require-dev": {
-        "phpunit/phpunit": "^10.0"
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text"
     }
 }

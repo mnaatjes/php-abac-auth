@@ -18,7 +18,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "mnaatjes\\ABAC\\Tests\\": "tests/"
+            "mnaatjes\\ABAC\\Tests\\": "tests/",
+            "mnaatjes\\ABAC\\Tests\\Stubs\\": "tests/Stubs"
         }
     },
     "require-dev": {

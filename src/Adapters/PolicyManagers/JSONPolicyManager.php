@@ -31,6 +31,7 @@
              * @var string $content
              */
             $content = file_get_contents($this->filepath);
+
             if($content === false){
                 throw new \Exception("Unable to get contents of Policy File: " . $this->filepath);
             }

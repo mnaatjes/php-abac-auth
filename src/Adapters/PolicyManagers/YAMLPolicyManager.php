@@ -16,7 +16,6 @@
          */
         /**-------------------------------------------------------------------------*/
         protected function getFileData(): array{
-
             /**
              * String of json file content
              * @var string $content
@@ -31,6 +30,7 @@
              * @var array $data
              */
             $data = Yaml::parse($content);
+
             if($data === false){
                 throw new \Exception("Unable to parse YAML data in Policy File: " . $this->filepath);
             }

@@ -91,6 +91,7 @@
             // Get rules from policy
             $rules = $policy->getRules();
 
+
             // No expressions exist
             // Defaults to true / a match
             if(empty($rules->getExpressions())){

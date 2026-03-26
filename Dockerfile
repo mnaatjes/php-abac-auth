@@ -15,7 +15,16 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    unzip
+    unzip \
+    libxml2-dev \
+    && docker-php-ext-install \
+    dom \
+    xmlwriter \
+    simplexml
+
+# Install and Enable PCOV for code coverage
+RUN pecl install pcov \
+    && docker-php-ext-enable pcov
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

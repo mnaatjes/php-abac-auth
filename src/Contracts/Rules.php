@@ -27,6 +27,10 @@
             private string $condition,
             array $expressions
         ){
+            if (empty($expressions)) {
+                $this->expressions = [];
+                return;
+            }
             // Determine Properties of each Expression
             $results = [];
 
